@@ -101,8 +101,6 @@ public class DriveQuickstart {
 		//************test commands***********
 		//deleteFile(service, "1Vp8c-mMh4YMBCvMIxn-0Sn3XKdTQfa_W");
 		//CreateFolder(service, "bin");
-		File folder = new File("C:/Users/Xc15m/Downloads/UploadTestFolder");
-		listFilesFromFolder(folder);
 		//downloadFile(service, "C:/Users/Xc15m/Downloads/");
     }
 
@@ -178,19 +176,4 @@ public class DriveQuickstart {
 		return null;
 	}
 	
-	//get list of files from local folder
-	public static void listFilesFromFolder(Drive service, File folder) {
-		try {
-			for (File fileEntry : folder.listFiles()) {
-				if (fileEntry.isDirectory()) {
-					listFilesForFolder(fileEntry);
-				} else {
-					System.out.println(fileEntry.getName());
-				}
-			}
-		} catch(IOException e) {
-			System.out.println("An error occurred: " + e);
-		}
-		return null;
-	}
-}
+	
