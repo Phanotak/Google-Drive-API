@@ -178,7 +178,7 @@ public class DriveQuickstart {
 		return null;
 	}
 	
-	//get list of files from local folder (google drive)
+	//get list of files from local folder
 	public static void listFilesFromFolder(Drive service, File folder) {
 		try {
 			for (File fileEntry : folder.listFiles()) {
