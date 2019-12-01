@@ -70,7 +70,7 @@ public class DriveQuickstart {
         //List names and IDs of files in specific folder
         //FileList result = service.files().list()
 		//		//application/x-binary for bin files; (application or test)/xml for xml files
-		//		.setQ("'1xAHx3vNSubIemliFcMbo27oJrSjNmU0T' in parents " + "and (mimeType='image/jpeg')")
+		//		.setQ("'' in parents " + "and (mimeType='image/jpeg')")
 		//		.setFields("nextPageToken, files(id, name)")
         //        .execute();
 		
@@ -82,15 +82,15 @@ public class DriveQuickstart {
 				case "1":
 					CreateFolder(service, "bin");
 				case "2":
-					downloadFile(service, "C:/Users/Xc15m/Downloads/Logs");
-					downloadFile(service, "C:/Users/Xc15m/Downloads/Logs/bin");
+					downloadFile(service, "");
+					downloadFile(service, "");
 		}
 		
 		
 		//upload file
 		//File fileMetadata = new File();
 		//fileMetadata.setName("photo.jpg");
-		//java.io.File filePath = new java.io.File("C:/Users/Xc15m/Downloads/photo.jpg");
+		//java.io.File filePath = new java.io.File("");
 		//FileContent mediaContent = new FileContent("image/jpeg", filePath);
 		//File file = service.files().create(fileMetadata, mediaContent)
 		//		.setFields("id")
@@ -99,9 +99,9 @@ public class DriveQuickstart {
 		
 		
 		//************test commands***********
-		//deleteFile(service, "1Vp8c-mMh4YMBCvMIxn-0Sn3XKdTQfa_W");
+		//deleteFile(service, "");
 		//CreateFolder(service, "bin");
-		//downloadFile(service, "C:/Users/Xc15m/Downloads/");
+		//downloadFile(service, "");
     }
 
 	//delete file (need fileID)
@@ -115,7 +115,7 @@ public class DriveQuickstart {
 	
 	//upload file (need fileID)
 	//private static void uploadFile(Drive service, String fileID) {
-	//	String originfolder = "C:/Users/Xc15m/Downloads";
+	//	String originfolder = "";
 	//	try {
 	//		File dir = new java.io.File(originfolder);
 	//		String [] files = dir.list();
@@ -132,11 +132,11 @@ public class DriveQuickstart {
 		try {
 			FileList result = service.files().list()
 				//application/x-binary for bin files; (application or test)/xml for xml files
-				.setQ("'1xAHx3vNSubIemliFcMbo27oJrSjNmU0T' in parents " + "and (mimeType='image/jpeg')")
+				.setQ("'' in parents " + "and (mimeType='image/jpeg')")
 				.setFields("nextPageToken, files(id, name)")
                 .execute();
 			List<File> files = result.getFiles();
-			//String destinationfolder = "C:/Users/Xc15m/Downloads/";
+			//String destinationfolder = "";
 			if (files == null || files.isEmpty()) {
 				System.out.println("No files found.");
 			} else {
@@ -165,7 +165,7 @@ public class DriveQuickstart {
 		File fileMetadata = new File();
 		fileMetadata.setName(foldername);
 		fileMetadata.setMimeType("application/vnd.google-apps.folder");
-		fileMetadata.setParents(Collections.singletonList("1xAHx3vNSubIemliFcMbo27oJrSjNmU0T"));
+		fileMetadata.setParents(Collections.singletonList(""));
 		File file = service.files().create(fileMetadata)
 			.setFields("id")
 			.execute();
