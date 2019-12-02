@@ -67,25 +67,28 @@ public class DriveQuickstart {
         Drive service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
                 .setApplicationName(APPLICATION_NAME)
                 .build();	
-        //List names and IDs of files in specific folder
-        //FileList result = service.files().list()
-		//		//application/x-binary for bin files; (application or test)/xml for xml files
-		//		.setQ("'' in parents " + "and (mimeType='image/jpeg')")
-		//		.setFields("nextPageToken, files(id, name)")
+		
+		//Scanner scanner = new Scanner(System.in);
+		//String protocol = scanner.nextLine();
+		//System.out.println("Enter '1' for Upload. Enter '2' for Download. ");	
+		//switch (protocol) {
+		//		case "1":
+		//			CreateFolder(service, "bin");
+		//		case "2":
+		//			downloadFile(service, "");
+		//			downloadFile(service, "");
+		//}
+		//FileList result = service.files().list()
+        //        .setFields("nextPageToken, files(id, name)")
         //        .execute();
+        //List<File> files = result.getFiles();
 		
 		
-		Scanner scanner = new Scanner(System.in);
-		String protocol = scanner.nextLine();
-		System.out.println("Enter '1' for Upload. Enter '2' for Download. ");	
-		switch (protocol) {
-				case "1":
-					CreateFolder(service, "bin");
-				case "2":
-					downloadFile(service, "");
-					downloadFile(service, "");
-		}
-		
+		//************test commands***********
+		//deleteFile(service, "");
+		//CreateFolder(service, "bin");
+		downloadFile(service, "");
+		uploadFile(service, "");
 		
 		//upload file
 		//File fileMetadata = new File();
@@ -97,35 +100,28 @@ public class DriveQuickstart {
 		//		.execute();
 		//System.out.println("File ID: " + file.getId());
 		
-		
-		//************test commands***********
-		//deleteFile(service, "");
-		//CreateFolder(service, "bin");
-		//downloadFile(service, "");
     }
-
-	//delete file (need fileID)
-	private static void deleteFile(Drive service, String fileId) {
+	
+	//upload file
+	private static void uploadFile(Drive service, String originfolder) {
 		try {
-			service.files().delete(fileId).execute();
+			java.io.File dir = new java.io.File(originfolder);
+			String [] fileslist = dir.list();
+			for (String file : fileslist) {
+				System.out.println(file);
+				File uploadfile = new File();
+				uploadfile.setName(file);
+				java.io.File filePath = new java.io.File(originfolder + file);
+				FileContent mediaContent = new FileContent("image/jpeg", filePath);
+				File uploadedfile = service.files().create(uploadfile, mediaContent)
+					.setFields("id")
+					.execute();
+				System.out.println("File ID: " + file);
+			}
 		} catch (IOException e) {
 			System.out.println("An error occurred: " + e);
 		}
 	}
-	
-	//upload file (need fileID)
-	//private static void uploadFile(Drive service, String fileID) {
-	//	String originfolder = "";
-	//	try {
-	//		File dir = new java.io.File(originfolder);
-	//		String [] files = dir.list();
-	//		for (String file : files) {
-	//			System.out.println(file);
-	//		}
-	//	} catch (IOException e) {
-	//		System.out.println("An error occurred: " + e);
-	//	}
-	//}
 	
 	//download file (need fileID)
 	private static void downloadFile(Drive service, String destinationfolder) {
@@ -176,4 +172,13 @@ public class DriveQuickstart {
 		return null;
 	}
 	
+	//delete file (need fileID)
+	private static void deleteFile(Drive service, String fileId) {
+		try {
+			service.files().delete(fileId).execute();
+		} catch (IOException e) {
+			System.out.println("An error occurred: " + e);
+		}
+	}
 	
+}
