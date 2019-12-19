@@ -35,7 +35,8 @@ public class DriveQuickstart {
      * If modifying these scopes, delete your previously saved tokens/ folder.
      */
     private static final List<String> SCOPES = Collections.singletonList(DriveScopes.DRIVE);
-    private static final String CREDENTIALS_FILE_PATH = "/client_secret.json";
+    //private static final String CREDENTIALS_FILE_PATH = "/client_secret.json";
+	private static final String CREDENTIALS_FILE_PATH = "/client_secret.json";
 
     /**
      * Creates an authorized Credential object.
@@ -45,7 +46,8 @@ public class DriveQuickstart {
      */
     private static Credential getCredentials(final NetHttpTransport HTTP_TRANSPORT) throws IOException {
         // Load client secrets.
-        InputStream in = DriveQuickstart.class.getResourceAsStream(CREDENTIALS_FILE_PATH);
+        //InputStream in = DriveQuickstart.class.getResourceAsStream(CREDENTIALS_FILE_PATH);
+		InputStream in = new FileInputStream(CREDENTIALS_FILE_PATH);
         if (in == null) {
             throw new FileNotFoundException("Resource not found: " + CREDENTIALS_FILE_PATH);
         }
@@ -61,47 +63,44 @@ public class DriveQuickstart {
         return new AuthorizationCodeInstalledApp(flow, receiver).authorize("user");
     }
 
-    public static void main(String... args) throws IOException, GeneralSecurityException {
-        // Build a new authorized API client service.
+    public static void main(String... args) throws IOException, GeneralSecurityException {		
+        //Build a new authorized API client service.
         final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
         Drive service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
                 .setApplicationName(APPLICATION_NAME)
-                .build();	
+                .build();
+		Console console = System.console();
+		if (args.length != 3) {
+			console.writer().println("Format to run programs is as follows: [java] [name of program] [parameter1] [parameter2] [parameter3] ");
+		}
+		String direction = args[0];
+		String src_dir = args[1];
+		String dst_dir = args[2];
+		String upld = "0";
+		String dwnld = "1";
 		
-		//Scanner scanner = new Scanner(System.in);
-		//String protocol = scanner.nextLine();
-		//System.out.println("Enter '1' for Upload. Enter '2' for Download. ");	
-		//switch (protocol) {
-		//		case "1":
-		//			CreateFolder(service, "bin");
-		//		case "2":
-		//			downloadFile(service, "");
-		//			downloadFile(service, "");
+		if (direction.equals(upld)) {
+			uploadFile(service, src_dir, dst_dir);
+		} else if (direction.equals(dwnld)) {
+			downloadFile(service, src_dir, dst_dir);
+		} //else {
+			//error message
+			//throw e;
 		//}
-		//FileList result = service.files().list()
-        //        .setFields("nextPageToken, files(id, name)")
-        //        .execute();
-        //List<File> files = result.getFiles();
-		
-		
-		//************test commands***********
-		//deleteFile(service, "");
-		//CreateFolder(service, "bin");
-		downloadFile(service, "");
-		uploadFile(service, "");
 		
     }
 	
 	//upload file
-	private static void uploadFile(Drive service, String originfolder) {
+	private static void uploadFile(Drive service, String src_dir, String dst_dir) {
 		try {
-			java.io.File dir = new java.io.File(originfolder);
+			java.io.File dir = new java.io.File(src_dir);
 			String [] fileslist = dir.list();
 			for (String file : fileslist) {
-				System.out.println(file);
+				//System.out.println(file);
 				File uploadfile = new File();
 				uploadfile.setName(file);
-				java.io.File filePath = new java.io.File(originfolder + file);
+				uploadfile.setParents(Collections.singletonList(dst_dir));
+				java.io.File filePath = new java.io.File(src_dir + file);
 				FileContent mediaContent = new FileContent("image/jpeg", filePath);
 				File uploadedfile = service.files().create(uploadfile, mediaContent)
 					.setFields("id")
@@ -114,26 +113,25 @@ public class DriveQuickstart {
 	}
 	
 	//download file (need fileID)
-	private static void downloadFile(Drive service, String destinationfolder) {
+	private static void downloadFile(Drive service, String src_dir, String dst_dir) {
 		try {
 			FileList result = service.files().list()
-				//application/x-binary for bin files; (application or test)/xml for xml files
-				.setQ("'' in parents " + "and (mimeType='image/jpeg')")
+				//application/x-binary for bin files; (application or text)/xml for xml files
+				.setQ("'' in parents " + "and (mimeType = 'image/jpeg')")
 				.setFields("nextPageToken, files(id, name)")
                 .execute();
 			List<File> files = result.getFiles();
-			//String destinationfolder = "";
 			if (files == null || files.isEmpty()) {
 				System.out.println("No files found.");
 			} else {
-				System.out.println("Files:");
+				//System.out.println("Files:");
 				for (File file : files) {
-					System.out.printf("%s (%s)\n", file.getName(), file.getId());
+					//System.out.printf("%s (%s)\n", file.getName(), file.getId());
 					String fileId = file.getId();
 					//System.out.println(fileId);
 					String fileName = file.getName();
 					//System.out.println(fileName);
-					OutputStream outputstream = new FileOutputStream(destinationfolder + fileName);
+					OutputStream outputstream = new FileOutputStream(dst_dir + fileName);
 					service.files().get(fileId)
 					.executeMediaAndDownloadTo(outputstream);
 					outputstream.flush();
