@@ -13,85 +13,134 @@ import com.google.api.services.drive.DriveScopes;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
 import com.google.api.client.http.FileContent;
-import com.google.api.client.http.GenericUrl;
-import com.google.api.client.http.HttpResponse;
-
 
 import java.io.*;
 import java.security.GeneralSecurityException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Scanner;
-import java.util.ArrayList;
+import java.util.*;
 
 
 public class DriveQuickstart {
-    private static final String APPLICATION_NAME = "Google Drive API Java Quickstart";
-    private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
-    private static final String TOKENS_DIRECTORY_PATH = "tokens";
-	
-    /**
-     * Global instance of the scopes required by this quickstart.
-     * If modifying these scopes, delete your previously saved tokens/ folder.
-     */
-    private static final List<String> SCOPES = Collections.singletonList(DriveScopes.DRIVE);
-    //private static final String CREDENTIALS_FILE_PATH = "/client_secret.json";
+	private static final String APPLICATION_NAME = "Google Drive API Java Quickstart";
+	private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
+	private static final String TOKENS_DIRECTORY_PATH = "tokens";
+
+	/**
+	 * Global instance of the scopes required by this quickstart. If modifying these
+	 * scopes, delete your previously saved tokens/ folder.
+	 */
+	private static final List<String> SCOPES = Collections.singletonList(DriveScopes.DRIVE);
+	// private static final String CREDENTIALS_FILE_PATH = "/client_secret.json";
 	private static final String CREDENTIALS_FILE_PATH = "/client_secret.json";
 
-    /**
-     * Creates an authorized Credential object.
-     * @param HTTP_TRANSPORT The network HTTP Transport.
-     * @return An authorized Credential object.
-     * @throws IOException If the credentials.json file cannot be found.
-     */
-    private static Credential getCredentials(final NetHttpTransport HTTP_TRANSPORT) throws IOException {
-        // Load client secrets.
-        //InputStream in = DriveQuickstart.class.getResourceAsStream(CREDENTIALS_FILE_PATH);
+	/**
+	 * Creates an authorized Credential object.
+	 * 
+	 * @param HTTP_TRANSPORT The network HTTP Transport.
+	 * @return An authorized Credential object.
+	 * @throws IOException If the credentials.json file cannot be found.
+	 */
+	private static Credential getCredentials(final NetHttpTransport HTTP_TRANSPORT) throws IOException {
+		// Load client secrets.
+		// InputStream in =
+		// DriveQuickstart.class.getResourceAsStream(CREDENTIALS_FILE_PATH);
 		InputStream in = new FileInputStream(CREDENTIALS_FILE_PATH);
-        if (in == null) {
-            throw new FileNotFoundException("Resource not found: " + CREDENTIALS_FILE_PATH);
-        }
-        GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
-
-        // Build flow and trigger user authorization request.
-        GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
-                HTTP_TRANSPORT, JSON_FACTORY, clientSecrets, SCOPES)
-                .setDataStoreFactory(new FileDataStoreFactory(new java.io.File(TOKENS_DIRECTORY_PATH)))
-                .setAccessType("offline")
-                .build();
-        LocalServerReceiver receiver = new LocalServerReceiver.Builder().setPort(8888).build();
-        return new AuthorizationCodeInstalledApp(flow, receiver).authorize("user");
-    }
-
-    public static void main(String... args) throws IOException, GeneralSecurityException {		
-        //Build a new authorized API client service.
-        final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-        Drive service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
-                .setApplicationName(APPLICATION_NAME)
-                .build();
-		Console console = System.console();
-		if (args.length != 3) {
-			console.writer().println("Format to run programs is as follows: [java] [name of program] [parameter1] [parameter2] [parameter3] ");
+		if (in == null) {
+			throw new FileNotFoundException("Resource not found: " + CREDENTIALS_FILE_PATH);
 		}
+		GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
+
+		// Build flow and trigger user authorization request.
+		GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(HTTP_TRANSPORT, JSON_FACTORY,
+				clientSecrets, SCOPES)
+						.setDataStoreFactory(new FileDataStoreFactory(new java.io.File(TOKENS_DIRECTORY_PATH)))
+						.setAccessType("offline").build();
+		LocalServerReceiver receiver = new LocalServerReceiver.Builder().setPort(8888).build();
+		return new AuthorizationCodeInstalledApp(flow, receiver).authorize("user");
+	}
+
+	public static void main(String... args) throws IOException, GeneralSecurityException {
+			// Build a new authorized API client service.
+		final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+		Drive service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
+				.setApplicationName(APPLICATION_NAME).build();
+		Console console = System.console();
+		if (args.length != 4) {
+			console.writer().println(
+					"Format to run programs is as follows: [java] [name of program] [parameter1] [parameter2] [parameter3] ");
+		}
+
 		String direction = args[0];
 		String src_dir = args[1];
 		String dst_dir = args[2];
+		String mime_type = args[3];
 		String upld = "0";
 		String dwnld = "1";
 		
-		if (direction.equals(upld)) {
-			uploadFile(service, src_dir, dst_dir);
-		} else if (direction.equals(dwnld)) {
-			downloadFile(service, src_dir, dst_dir);
-		} //else {
-			//error message
-			//throw e;
-		//}
+		// if (direction.equals(upld)) {
+		// 	uploadFile(service, src_dir, dst_dir, mime_type);
+		// } else if (direction.equals(dwnld)) {
+		// 	downloadFile(service, src_dir, dst_dir);
+		// } 
+		String market_xml = "market_" + Date.Today() + ".xml";
+		String indices_xml = "";
+		String src_folder_id = getGoogleSubFolderID(null, src_dir);
+		String market_xml_id = getGoogleSubFileID(src_dir, market_xml);
+
+		String src_bin_folder_id = getGoogleSubFolderID(null, "bin");
+
+		List<File> googleRootFolders = getGoogleRootFolders();
+        for (File folder : googleRootFolders) {
+            System.out.println("Folder ID: " + folder.getId() + " --- Name: " + folder.getName());
+		}
+		//System.out.println("TestLine");
+
+		List<File> rootGoogleFolders = getGoogleRootFoldersByName("bin");
+		String FolderId[] = new String[2];
+		FolderId[0] = src_dir;
+		for (File folder : rootGoogleFolders) {
+			System.out.println("Folder ID: " + folder.getId() + " --- Name: " + folder.getName());
+			FolderId[1] = folder.getId();
+		}
+		//System.out.println("TestLine2");
+		System.out.println("FolderId[0] is: " + FolderId[0].toString());
+		System.out.println("FolderId[1] is: " + FolderId[1].toString());
 		
+		
+		//Get fileIds for every file in folder
+		FileList fileIdList = service.files().list()
+            .setQ("'17DD5EBwUsMj8vPDtKpznXVLbs3kOHVMw' in parents ")
+			.setFields("files(id, name)")
+			.execute();
+		List<File> files = fileIdList.getFiles();
+		if (files == null || files.isEmpty()) {
+			System.out.println("No files found.");
+		} else {
+			for (File file : files) {
+				System.out.printf("%s (%s)\n", file.getName(), file.getId());
+				String fileId = file.getId();
+				String folderId = FolderId[1];
+				// Retrieve the existing parents to remove
+				file = service.files().get(fileId)
+					.setFields("parents")
+					.execute();
+				StringBuilder previousParents = new StringBuilder();
+				for (String parent : file.getParents()) {
+					previousParents.append(parent);
+					previousParents.append(',');
+				}
+				// Move the file to the new folder
+				file = service.files().update(fileId, null)
+					.setAddParents(folderId)
+					.setRemoveParents(previousParents.toString())
+					.setFields("id, parents")
+					.execute();
+				System.out.println("File Transfer Complete!");
+			}
+		}
     }
 	
 	//upload file
-	private static void uploadFile(Drive service, String src_dir, String dst_dir) {
+	private static void uploadFile(Drive service, String src_dir, String dst_dir, String mime_type) {
 		try {
 			java.io.File dir = new java.io.File(src_dir);
 			String [] fileslist = dir.list();
@@ -101,7 +150,7 @@ public class DriveQuickstart {
 				uploadfile.setName(file);
 				uploadfile.setParents(Collections.singletonList(dst_dir));
 				java.io.File filePath = new java.io.File(src_dir + file);
-				FileContent mediaContent = new FileContent("image/jpeg", filePath);
+				FileContent mediaContent = new FileContent(mime_type, filePath);
 				File uploadedfile = service.files().create(uploadfile, mediaContent)
 					.setFields("id")
 					.execute();
@@ -116,8 +165,9 @@ public class DriveQuickstart {
 	private static void downloadFile(Drive service, String src_dir, String dst_dir) {
 		try {
 			FileList result = service.files().list()
-				//application/x-binary for bin files; (application or text)/xml for xml files
-				.setQ("'' in parents " + "and (mimeType = 'image/jpeg')")
+				.setQ("'' in parents " 
+				+ "and (mimeType ='application/x-binary' or mimeType = 'application/xml' or mimeType = 'text/xml')")
+				//.setQ("(mimeType ='application/x-binary' or mimeType = 'application/xml' or mimeType = 'text/xml')")
 				.setFields("nextPageToken, files(id, name)")
                 .execute();
 			List<File> files = result.getFiles();
@@ -126,11 +176,9 @@ public class DriveQuickstart {
 			} else {
 				//System.out.println("Files:");
 				for (File file : files) {
-					//System.out.printf("%s (%s)\n", file.getName(), file.getId());
+					System.out.printf("%s (%s)\n", file.getName(), file.getId());
 					String fileId = file.getId();
-					//System.out.println(fileId);
 					String fileName = file.getName();
-					//System.out.println(fileName);
 					OutputStream outputstream = new FileOutputStream(dst_dir + fileName);
 					service.files().get(fileId)
 					.executeMediaAndDownloadTo(outputstream);
@@ -143,6 +191,116 @@ public class DriveQuickstart {
 		}
 	}
 	
+	public static final List<File> getGoogleSubFolders(String googleFolderIdParent) throws IOException {
+ 
+        Drive driveService = GoogleDriveUtils.getDriveService();
+ 
+        String pageToken = null;
+        List<File> list = new ArrayList<File>();
+ 
+        String query = null;
+        if (googleFolderIdParent == null) {
+            query = " mimeType = 'application/vnd.google-apps.folder' " //
+                    + " and 'root' in parents";
+        } else {
+            query = " mimeType = 'application/vnd.google-apps.folder' " //
+                    + " and '" + googleFolderIdParent + "' in parents";
+        }
+ 
+        do {
+            FileList result = driveService.files().list().setQ(query).setSpaces("drive") //
+                    // Fields will be assigned values: id, name, createdTime
+                    .setFields("nextPageToken, files(id, name, createdTime)")//
+                    .setPageToken(pageToken).execute();
+            for (File file : result.getFiles()) {
+                list.add(file);
+            }
+            pageToken = result.getNextPageToken();
+        } while (pageToken != null);
+        //
+        return list;
+    }
+
+	public static final String getGoogleSubFolderID(String googleFolderIdParent, String dir) throws IOException {
+ 
+        Drive driveService = GoogleDriveUtils.getDriveService();
+ 
+        String pageToken = null;
+        List<File> list = new ArrayList<File>();
+ 
+        String query = null;
+        if (googleFolderIdParent == null) {
+            query = " mimeType = 'application/vnd.google-apps.folder' " //
+                    + " and 'root' in parents";
+        } else {
+            query = " mimeType = 'application/vnd.google-apps.folder' " //
+                    + " and '" + googleFolderIdParent + "' in parents";
+        }
+ 
+        do {
+            FileList result = driveService.files().list().setQ(query).setSpaces("drive") //
+                    // Fields will be assigned values: id, name, createdTime
+                    .setFields("nextPageToken, files(id, name, createdTime)")//
+                    .setPageToken(pageToken).execute();
+            for (File file : result.getFiles()) {
+                list.add(file);
+            }
+            pageToken = result.getNextPageToken();
+        } while (pageToken != null);
+        //
+		for (File file : list)
+		{
+			// if (file.getMimeType() = application/vnd.google-apps.folder)
+			// 	continue;
+			if (file.getName().toLowerCase() == dir.toLowerCase())
+			{
+				return file.getId();
+			}
+		}
+		return "";
+    }
+
+	public static final List<File> getGoogleRootFolders() throws IOException {
+        return getGoogleSubFolders(null);
+    }
+
+	public static final List<File> getGoogleSubFolderByName(String googleFolderIdParent, String subFolderName)
+            throws IOException {
+ 
+        Drive driveService = GoogleDriveUtils.getDriveService();
+ 
+        String pageToken = null;
+        List<File> list = new ArrayList<File>();
+ 
+        String query = null;
+        if (googleFolderIdParent == null) {
+            query = " name = '" + subFolderName + "' " 
+                    + " and mimeType = 'application/vnd.google-apps.folder' " 
+                    + " and 'root' in parents";
+        } else {
+            query = " name = '" + subFolderName + "' " 
+                    + " and mimeType = 'application/vnd.google-apps.folder' " 
+                    + " and '" + googleFolderIdParent + "' in parents";
+        }
+ 
+        do {
+            FileList result = driveService.files().list().setQ(query).setSpaces("drive") 
+                    .setFields("nextPageToken, files(id, name, createdTime)")
+                    .setPageToken(pageToken).execute();
+            for (File file : result.getFiles()) {
+                list.add(file);
+            }
+            pageToken = result.getNextPageToken();
+        } while (pageToken != null);
+        //
+        return list;
+    }
+
+	//first value needs to be id (string) of parent folder. Enter name of subfolder in main method
+	public static final List<File> getGoogleRootFoldersByName(String subFolderName) throws IOException {
+        return getGoogleSubFolderByName("", subFolderName);
+    }
+	/*
 	//create subfolder
 	private static String CreateFolder(Drive service, String foldername) {
 		try{
@@ -168,5 +326,5 @@ public class DriveQuickstart {
 			System.out.println("An error occurred: " + e);
 		}
 	}
-	
+	*/
 }
