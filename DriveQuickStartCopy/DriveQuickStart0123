@@ -15,6 +15,7 @@ import com.google.api.services.drive.model.FileList;
 import com.google.api.client.http.FileContent;
 
 import java.io.*;
+import java.nio.file.*;
 import java.security.GeneralSecurityException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -65,32 +66,89 @@ public class DriveQuickstart {
 		Drive service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
 				.setApplicationName(APPLICATION_NAME).build();
 		Console console = System.console();
-		if (args.length != 3) {
+		if (args.length < 3) {
 			console.writer().println(
-					"Format to run programs is as follows: [java] [name of program] [parameter1] [parameter2] [parameter3] ");
+					"Format to run programs is as follows: [java] [name of program] [parameter1] [parameter2] [parameter3]");
 		}
 
 		String direction = args[0];
 		String src_dir = args[1];
 		String dst_dir = args[2];
+		String date;
+		if (args.length == 3)
+		{
+			date = new SimpleDateFormat("yyyyMMdd").format(new Date());
+		}
+		else
+		{
+			date = args[3];
+		}
 		//String mime_type = args[3];
 		String upld = "0";
 		String dwnld = "1";
 		
 		if (direction.equals(upld)) {
-		//  	uploadFile(service, src_dir, dst_dir, mime_type);
+			String uploadfoldername = dst_dir.concat("." + date);
+		// 	String pageToken = null;
+		// 	do {
+		// 		FileList result = service.files().list()
+		// 			.setQ("mimeType = 'application/vnd.google-apps.folder'")
+		// 			.setSpaces("drive")
+		// 			.setFields("nextPageToken, files(id, name)")
+		// 			.setPageToken(pageToken)
+		// 			.execute();
+		// 		for (File file : result.getFiles()) {
+		// 		  System.out.printf("Found file: %s (%s)\n", file.getName(), file.getId());
+		// 		  if (uploadfoldername.equals(file.getName())) {
+
+		// 		  } else {
+
+		// 		  }
+		// 		}
+		// 		pageToken = result.getNextPageToken();
+		// 	  } while (pageToken != null);
+			CreateFolder(service, uploadfoldername, null);
+			//get folder id of destination folder on Google Drive
+			String folder_id = getGoogleSubFolderID(null, uploadfoldername);
+			uploadFile(service, src_dir, folder_id);
+			CreateFolder(service, "bin", folder_id);
+			String bin_folder_id = getGoogleSubFolderByName(folder_id, "bin");
+			uploadFile(service, src_dir.concat("bin/"), bin_folder_id);
 		} else if (direction.equals(dwnld)) {
-		//  	downloadFile(service, src_dir, dst_dir);
-		// } 
-			String date = new SimpleDateFormat("yyyyMMdd").format(new Date());
 			String market_xml = "market_" + date + ".xml";
 			String indices_xml = "indices_" + date + ".xml";
 			String src_folder_id = getGoogleSubFolderID(null, src_dir);
-			String src_folder_id_clean = src_folder_id.replaceAll("[_-]", "");
+			String bin_path = dst_dir.concat("bin/");
+			//String src_folder_id_clean = src_folder_id.replaceAll("[_-]", "");
 			String bin_folder_id = getGoogleSubFolderByName(src_folder_id, "bin");
 			String market_xml_id = getGoogleSubFileID(src_folder_id, market_xml);
+			System.out.println(market_xml_id);
 			String indices_xml_id = getGoogleSubFileID(src_folder_id, indices_xml);
+			System.out.println(indices_xml_id);
+			List<File> bin_files = getbinfolderlist(service, bin_folder_id);
+			System.out.println(bin_files.size());
+			
+			Path dstpath = Paths.get(dst_dir);
+			if (!Files.exists(dstpath)) {
+				try {
+					Files.createDirectories(dstpath);
+				} catch (IOException e) {
+					//fail to create directory
+					e.printStackTrace();
+				}
+			}
+			Path binpath = Paths.get(bin_path);
+			if (!Files.exists(binpath)) {
+				try {
+					Files.createDirectories(binpath);
+				} catch (IOException e) {
+					//fail to create directory
+					e.printStackTrace();
+				}
+			}
 			downloadFile(service, indices_xml, indices_xml_id, dst_dir);
+			downloadFile(service, market_xml, market_xml_id, dst_dir);
+			downloadBinFiles(service, bin_files, bin_path);
 		}
 
 		// List<File> googleRootFolders = getGoogleRootFolders();
@@ -143,26 +201,33 @@ public class DriveQuickstart {
 		// }
     }
 	
+	
 	//upload file
-	private static void uploadFile(Drive service, String src_dir, String dst_dir, String mime_type) {
-		try {
+	private static void uploadFile(Drive service, String src_dir, String dst_dir) throws IOException {
 			java.io.File dir = new java.io.File(src_dir);
-			String [] fileslist = dir.list();
-			for (String file : fileslist) {
-				//System.out.println(file);
+			java.io.File [] fileslist = dir.listFiles(new FileFilter() {
+				public boolean accept(java.io.File pathname) {
+					String name = pathname.getName().toLowerCase();
+					return name.endsWith(".xml") || name.endsWith(".bin") && pathname.isFile();
+				}
+			});
+			String[] names = new String[fileslist.length];
+			for (int i = 0; i < fileslist.length; i++) {
+			   names[i] = fileslist[i].getName();
+			}
+			for (String file : names) {
 				File uploadfile = new File();
 				uploadfile.setName(file);
 				uploadfile.setParents(Collections.singletonList(dst_dir));
 				java.io.File filePath = new java.io.File(src_dir + file);
+				Path path = filePath.toPath();
+				String mime_type = Files.probeContentType(path);
 				FileContent mediaContent = new FileContent(mime_type, filePath);
 				File uploadedfile = service.files().create(uploadfile, mediaContent)
 					.setFields("id")
 					.execute();
 				System.out.println("File ID: " + uploadedfile);
-			}
-		} catch (IOException e) {
-			System.out.println("An error occurred: " + e);
-		}
+			}				
 	}
 	
 	//download file (need fileID)
@@ -173,38 +238,61 @@ public class DriveQuickstart {
 			.executeMediaAndDownloadTo(outputstream);
 		outputstream.flush();
 		outputstream.close();
-		
-		// try {
-		// 	FileList result = service.files().list().
-		// 		.setQ("'1omw_ZUTv2ZMyQCKIcU4N5--NhyeM_q84' in parents ")
-        //         .execute();
-		// 	List<File> files = result.getFiles();
-		// 	if (files == null || files.isEmpty()) {
-		// 		System.out.println("No files found.");
-		// 	} else {
-		// 		for (File file : files) {
-		// 			System.out.printf("%s (%s)\n", file.getName(), file.getId());
-		// 			fileId = file.getId();
-		// 			String fileName = file.getName();
-		// 			OutputStream outputstream = new FileOutputStream(dst_dir + fileName);
-		// 			service.files().get(fileId)
-		// 			.executeMediaAndDownloadTo(outputstream);
-		// 			outputstream.flush();
-		// 			outputstream.close();
-		// 		}
-		// 	}
-		// } catch (IOException e) {
-		// 	System.out.println("An error occurred: " + e);
-		// }
 	}
 	
+	public static void downloadBinFiles(Drive service, List<File> files, String dst_dir) throws IOException{
+		int i = 0;
+		for (File file : files) {
+			try {
+				String fileId = file.getId();
+				String fileName = file.getName();
+				//need to check if folder exists. If not, create folder.
+				System.out.println("File downloading is: " + fileName);
+				OutputStream outputstream = new FileOutputStream(dst_dir + fileName);
+					service.files().get(fileId)
+						.executeMediaAndDownloadTo(outputstream);
+					outputstream.flush();
+					outputstream.close();
+				i++;
+				System.out.println(i + " files downloaded.");
+			} catch (Exception ignore) {
+				i++;
+				System.out.println(i + " files downloaded.");
+				continue;
+			}
+			// } catch (IOException e) {
+			// 	Console console = System.console();
+			// 	console.writer().println("Error.");
+			// 	e.getMessage();
+			// 	e.printStackTrace();	
+			// }
+		}
+	}
+
+	public static final List<File> getbinfolderlist(Drive service, String bin_folder_id) throws IOException {
+		try {
+			List<File> list = new ArrayList<File>();
+			String pageToken = null;
+			do {
+				FileList result = service.files().list()
+					.setQ("'" + bin_folder_id + "' in parents")
+					.setPageToken(pageToken)
+					.execute();
+					for (File file : result.getFiles()) {
+						list.add(file);
+					}
+					pageToken = result.getNextPageToken();
+				} while (pageToken != null);
+				return list;
+		} catch (Exception e) {
+			return null;
+		}
+	}
+
 	public static final List<File> getGoogleSubFolders(String googleFolderIdParent) throws IOException {
- 
         Drive driveService = GoogleDriveUtils.getDriveService();
- 
         String pageToken = null;
         List<File> list = new ArrayList<File>();
- 
         String query = null;
         if (googleFolderIdParent == null) {
             query = " mimeType = 'application/vnd.google-apps.folder' " //
@@ -218,7 +306,8 @@ public class DriveQuickstart {
             FileList result = driveService.files().list().setQ(query).setSpaces("drive") //
                     // Fields will be assigned values: id, name, createdTime
                     .setFields("nextPageToken, files(id, name, createdTime)")//
-                    .setPageToken(pageToken).execute();
+					.setPageToken(pageToken)
+					.execute();
             for (File file : result.getFiles()) {
                 list.add(file);
             }
@@ -244,9 +333,11 @@ public class DriveQuickstart {
 			}
 	
 			do {
-				FileList result = driveService.files().list().setQ(query).setSpaces("drive") //
+				FileList result = driveService.files().list()
+						.setQ(query)
+						.setSpaces("drive")
 						// Fields will be assigned values: id, name, createdTime
-						.setFields("nextPageToken, files(id, name, createdTime)")//
+						.setFields("nextPageToken, files(id, name, createdTime)")
 						.setPageToken(pageToken).execute();
 				for (File folderid : result.getFiles()) {
 					list.add(folderid);
@@ -261,7 +352,7 @@ public class DriveQuickstart {
 				// 	continue;
 				String name1 = folder.getName().toLowerCase();
 				String name2 = dir.toLowerCase();
-				if (folder.getName().toLowerCase().equals(dir.toLowerCase()))
+				if (name1.toLowerCase().equals(name2))
 				{
 					return folder.getId();
 				}
@@ -274,21 +365,38 @@ public class DriveQuickstart {
     }
 
 	public static final String getGoogleSubFileID(String src_folder_id, String filename) throws IOException {
-		String fileId = "";
-		Drive driveService = GoogleDriveUtils.getDriveService();
-		FileList result = driveService.files().list()
-			.setQ("'" + src_folder_id + "' in parents")
-			.execute();
-		List<File> files = result.getFiles();
-		if (files == null || files.isEmpty()) {
-            System.out.println("No files found.");
-        } else {
-			System.out.println("There are files");
-			for (File file : result.getFiles()) {
-				fileId = file.getId();
+		try {
+			String pageToken = null;
+			List<File> list = new ArrayList<File>();
+			Drive driveService = GoogleDriveUtils.getDriveService();
+			do {
+				FileList result = driveService.files().list()
+					.setQ("'" + src_folder_id + "' in parents")
+					.setSpaces("drive")
+					.setFields("nextPageToken, files(id, name, createdTime)")
+					.setPageToken(pageToken)
+					.execute();
+				List<File> files = result.getFiles();
+				if (files == null || files.isEmpty()) {
+					System.out.println("No files found.");
+				} else {
+					System.out.println("There are files");
+					for (File file : result.getFiles()) {
+						list.add(file);
+					}
+				}
+				pageToken = result.getNextPageToken();
+				for (File file : list) {
+					if (filename.equals(file.getName()))
+					{
+						return file.getId();
+					}
 			}
+			return "";
+			} while (pageToken != null);
+		} catch (Exception e) {
+			return "";
 		}
-		return fileId;
 	}
 
 	public static final List<File> getGoogleRootFolders() throws IOException {
@@ -338,14 +446,14 @@ public class DriveQuickstart {
 	public static final String getGoogleRootFoldersByName(String subFolderName) throws IOException {
         return getGoogleSubFolderByName(null, subFolderName);
     }
-	/*
+	
 	//create subfolder
-	private static String CreateFolder(Drive service, String foldername) {
+	private static String CreateFolder(Drive service, String foldername, String parent_folder_id) {
 		try{
 		File fileMetadata = new File();
 		fileMetadata.setName(foldername);
 		fileMetadata.setMimeType("application/vnd.google-apps.folder");
-		fileMetadata.setParents(Collections.singletonList("1LJjwespGKRfY1p1dYif4Toxl_sEJynk5"));
+		fileMetadata.setParents(Collections.singletonList(parent_folder_id));
 		File file = service.files().create(fileMetadata)
 			.setFields("id")
 			.execute();
@@ -355,7 +463,7 @@ public class DriveQuickstart {
 		}
 		return null;
 	}
-	
+	/*
 	//delete file (need fileID)
 	private static void deleteFile(Drive service, String fileId) {
 		try {
