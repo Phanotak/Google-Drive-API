@@ -33,7 +33,7 @@ public class DriveQuickstart {
 	 */
 	private static final List<String> SCOPES = Collections.singletonList(DriveScopes.DRIVE);
 	// private static final String CREDENTIALS_FILE_PATH = "/client_secret.json";
-	private static final String CREDENTIALS_FILE_PATH = "C:/Quickstart/src/main/resources/client_secret.json";
+	private static final String CREDENTIALS_FILE_PATH = "/client_secret.json";
 
 	/**
 	 * Creates an authorized Credential object.
