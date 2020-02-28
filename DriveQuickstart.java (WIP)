@@ -32,9 +32,9 @@ public class DriveQuickstart {
 	 * scopes, delete your previously saved tokens/ folder.
 	 */
 	private static final List<String> SCOPES = Collections.singletonList(DriveScopes.DRIVE);
-	// private static final String CREDENTIALS_FILE_PATH = "/client_secret.json";
-	private static final String CREDENTIALS_FILE_PATH = "/client_secret.json";
-
+	private static final String CREDENTIALS_FILE_PATH = "src/main/resources/client_secret.json";
+	//private static final String CREDENTIALS_FILE_PATH = "C:/Quickstart/src/main/resources/client_secret.json";
+	
 	/**
 	 * Creates an authorized Credential object.
 	 * 
@@ -45,7 +45,7 @@ public class DriveQuickstart {
 	private static Credential getCredentials(final NetHttpTransport HTTP_TRANSPORT) throws IOException {
 		// Load client secrets.
 		// InputStream in =
-		// DriveQuickstart.class.getResourceAsStream(CREDENTIALS_FILE_PATH);
+		// zDriveQuickstart.class.getResourceAsStream(CREDENTIALS_FILE_PATH);
 		InputStream in = new FileInputStream(CREDENTIALS_FILE_PATH);
 		if (in == null) {
 			throw new FileNotFoundException("Resource not found: " + CREDENTIALS_FILE_PATH);
@@ -159,7 +159,7 @@ public class DriveQuickstart {
 		
 		// //Get fileIds for every file in folder
 		// FileList fileIdList = service.files().list()
-       		//      .setQ("'' in parents ")
+        //     .setQ("'17DD5EBwUsMj8vPDtKpznXVLbs3kOHVMw' in parents ")
 		// 	.setFields("files(id, name)")
 		// 	.execute();
 		// List<File> files = fileIdList.getFiles();
