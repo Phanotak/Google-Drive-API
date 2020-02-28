@@ -139,55 +139,6 @@ public class DriveQuickstart {
 			downloadFile(service, market_xml, market_xml_id, dst_dir);
 			downloadBinFiles(service, bin_files, bin_path);
 		}
-
-		// List<File> googleRootFolders = getGoogleRootFolders();
-        // for (File folder : googleRootFolders) {
-        //     System.out.println("Folder ID: " + folder.getId() + " --- Name: " + folder.getName());
-		// }
-		// System.out.println("TestLine");
-
-		// List<File> rootGoogleFolders = getGoogleRootFoldersByName("bin");
-		// String FolderId[] = new String[2];
-		// FolderId[0] = src_dir;
-		// for (File folder : rootGoogleFolders) {
-		// 	System.out.println("Folder ID: " + folder.getId() + " --- Name: " + folder.getName());
-		// 	FolderId[1] = folder.getId();
-		// }
-		// //System.out.println("TestLine2");
-		// System.out.println("FolderId[0] is: " + FolderId[0].toString());
-		// System.out.println("FolderId[1] is: " + FolderId[1].toString());
-		
-		// //Get fileIds for every file in folder
-		// FileList fileIdList = service.files().list()
-        //     .setQ("'17DD5EBwUsMj8vPDtKpznXVLbs3kOHVMw' in parents ")
-		// 	.setFields("files(id, name)")
-		// 	.execute();
-		// List<File> files = fileIdList.getFiles();
-		// if (files == null || files.isEmpty()) {
-		// 	System.out.println("No files found.");
-		// } else {
-		// 	for (File file : files) {
-		// 		System.out.printf("%s (%s)\n", file.getName(), file.getId());
-		// 		String fileId = file.getId();
-		// 		String folderId = FolderId[1];
-		// 		// Retrieve the existing parents to remove
-		// 		file = service.files().get(fileId)
-		// 			.setFields("parents")
-		// 			.execute();
-		// 		StringBuilder previousParents = new StringBuilder();
-		// 		for (String parent : file.getParents()) {
-		// 			previousParents.append(parent);
-		// 			previousParents.append(',');
-		// 		}
-		// 		// Move the file to the new folder
-		// 		file = service.files().update(fileId, null)
-		// 			.setAddParents(folderId)
-		// 			.setRemoveParents(previousParents.toString())
-		// 			.setFields("id, parents")
-		// 			.execute();
-		// 		System.out.println("File Transfer Complete!");
-		// 	}
-		// }
     }
 	
 	
